@@ -26,11 +26,11 @@ public class EventBus {
     // value 是所有订阅者里面方法的参数的class
     private final Map<Object, List<Class<?>>> typesBySubscriber;
     private EventBus(){
-        typesBySubscriber = new HashMap<Object, List<Class<?>>>();
+        typesBySubscriber = new HashMap<>();
         subscriptionsByEventType = new HashMap<>();
     }
 
-    static volatile EventBus defaultInstance;
+    private static volatile EventBus defaultInstance;
 
     /** Convenience singleton for apps using a process-wide EventBus instance. */
     public static EventBus getDefault() {
@@ -116,13 +116,14 @@ public class EventBus {
         }
     }
 
-    public void post(Object event) {
+    public void post(Object event) {  //post传入的是一个参数
         // 遍历 subscriptionsByEventType，找到符合的方法调用方法的 method.invoke() 执行。要注意线程切换
         Class<?> eventType = event.getClass();
         // 找到符合的方法调用方法的 method.invoke() 执行
         CopyOnWriteArrayList<Subscription> subscriptions =  subscriptionsByEventType.get(eventType);
         if(subscriptions != null){
             for (Subscription subscription : subscriptions) {
+                //将方法和参数都提交给executeMethod去判断然后执行
                 executeMethod(subscription,event);
             }
         }
@@ -155,7 +156,7 @@ public class EventBus {
             case BACKGROUND:
                 if(!isMainThread){
                     invokeMethod(subscription,event);
-                }else {
+                }else { //如果实在主线程，需要新建一个子线程去执行。
                     AsyncPoster.enqueue(subscription,event);
                 }
                 break;
